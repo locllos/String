@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <exception>
 
 template <typename elem_t>
 void Copy(elem_t* data_from, elem_t* data_to, int amount_elements)
@@ -78,29 +79,29 @@ public:
     }
 
     elem_t& operator[](int idx)
-    {
-        // TODO: throw exception ((idx < 0 || idx >= size_)
+    {   
+        if (idx < 0 || idx >= size_) throw std::out_of_range("exceeding the boundaries");
+
         return  data_[idx]; 
     }
 
     elem_t operator[](int idx) const
     {
-        // TODO: throw exception ((idx < 0 || idx >= size_)
+        if (idx < 0 || idx >= size_) throw std::out_of_range("exceeding the boundaries");
+
         return  data_[idx]; 
     }
 
     void Set(const elem_t& element, int idx)
     {
-        // TODO: throw exception
-        if (idx < 0 || idx >= size_) return;
+        if (idx < 0 || idx >= size_) throw std::out_of_range("exceeding the boundaries");
 
         data_[idx] = element;
     }
 
     elem_t Get(int idx) const
     {
-        // TODO: throw exception
-        if (idx < 0 || idx >= size_) return elem_t();
+        if (idx < 0 || idx >= size_) throw std::out_of_range("exceeding the boundaries");
 
         return data_[idx];
     }
@@ -118,8 +119,7 @@ public:
     
     void popBack()
     {   
-        // TODO: throw exception
-        if (size_ < 1) return;
+        if (size_ < 1) throw std::underflow_error("size is equals to zero");
 
         if (size_ - 1 <= 2 * capacity_ / 3)
         {
@@ -130,16 +130,14 @@ public:
 
     elem_t& Front() 
     {   
-        // TODO: throw exception   
-        if (data_ == nullptr) return elem_t();
+        if (data_ == nullptr || size_ == 0) throw std::underflow_error("size is equals to zero");
 
         return *data_;
     }
     
     elem_t& Back() 
     {
-        // TODO: throw exception   
-        if (data_ == nullptr) return elem_t();
+        if (data_ == nullptr || size_ == 0) throw std::underflow_error("size is equals to zero");;
 
         return data_[size_ - 1];
     }
@@ -154,8 +152,6 @@ public:
 
         Fill(data_, elem_t(), capacity_);
     }
-
-    // learn about input/output streams
 
     ~Array()
     {
@@ -187,7 +183,6 @@ public:
 
         const Iterator& operator+=(int idx)
         {
-            // TODO: throw exception
             if (element_ != nullptr)
             {
                 element_ += idx; 
