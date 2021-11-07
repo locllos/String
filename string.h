@@ -1,11 +1,11 @@
-#include <sys/types.h>
+#include "array.hpp"
+#include <iostream>
 
 class String
 {
 private:
 
-    size_t length_;
-    char* data_;
+    Array<char> array;
 
 public:
 
@@ -49,35 +49,14 @@ public:
     bool isEmpty() const;
     void Clear();
 
-    // learn about input/output streams
+    friend std::ostream& operator<<( std::ostream& output, const String& string);
+    friend std::istream& operator>>( std::istream& input, String& string);
 
     ~String();
-
-    class Iterator
-    {
-    private:
-
-        char* element_;
-
-    public:
-
-        Iterator();
-        Iterator(const char& element);
-
-        const Iterator& operator=(const Iterator& other);
-        const Iterator& operator=(const char& element);
-
-        const Iterator& operator++();    // prefix
-        const Iterator& operator++(int); // postfix
-
-        const Iterator& operator--();    
-        const Iterator& operator--(int); 
-
-        bool operator!=(const Iterator& other);
-        
-        char operator*();
-    };
 };
 
 String operator+(char symbol, const String& string);
 String operator+(const String& lhs, const String& rhs);
+
+std::ostream& operator<<( std::ostream& output, const String& string);
+std::istream& operator>>( std::istream& input, String& string);
