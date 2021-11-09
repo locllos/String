@@ -1,8 +1,10 @@
 #include <sys/types.h>
+#include <ostream>
+#include <istream>
 #include <exception>
 
 template <typename elem_t>
-void Copy(elem_t* data_from, elem_t* data_to, int amount_elements)
+void Copy(const elem_t* data_from, elem_t* data_to, int amount_elements)
 {
     for (int i = 0; i < amount_elements; ++i)
     {
@@ -36,8 +38,14 @@ private:
     {
         elem_t* new_data = new elem_t[new_capacity];
 
-        Copy(data_, new_data, capacity_);
-        Fill(new_data + capacity_, elem_t(), new_capacity - capacity_);
+        if (new_data == nullptr) throw std::overflow_error("result of realloc is nullptr");
+
+        Copy(data_, new_data, std::min(new_capacity, capacity_));
+
+        if (capacity_ < new_capacity)
+        {
+            Fill(new_data + capacity_, elem_t(), new_capacity - capacity_);
+        }
 
         delete[] data_;
 
@@ -52,12 +60,19 @@ public:
     class Iterator;
 
     Array() = default;    
-    Array(elem_t* elements, int amount_elements) : size_(amount_elements), capacity_(amount_elements)
+    Array(const elem_t* elements, int amount_elements) : size_(amount_elements), capacity_(amount_elements)
     {   
         size_ = amount_elements;
         reallocData(amount_elements);
 
-        Copy(data_, elements, amount_elements);
+        Copy(elements, data_, amount_elements);
+    }
+    Array(const elem_t& element, int amount_elements) : size_(amount_elements), capacity_(amount_elements)
+    {   
+        size_ = amount_elements;
+        reallocData(amount_elements);
+
+        Fill(data_, element, amount_elements);
     }
 
     Array(const Array& other) : size_(other.size())
@@ -106,26 +121,39 @@ public:
         return data_[idx];
     }
 
-    size_t size() const {return size_;}
-    
-    void pushBack(const elem_t& element)
+    size_t size() const {return size_;}    
+
+    void pushBack(const elem_t* elements, int amount_elements)
     {
-        if (size_ + 1 > capacity_)
+        if (size_ + amount_elements > capacity_)
         {
             reallocData((capacity_ + 1) * 2);
         }
-        data_[size_++] = element;
+        Copy(elements, data_ + size_, amount_elements);
+
+        size_ += amount_elements;
+    }
+
+    void pushBack(const Array& other)
+    {
+        pushBack(other.data_, other.size_);
+    }
+
+    void pushBack(const elem_t& element)
+    {
+        pushBack(&element, 1);
     }
     
     void popBack()
     {   
         if (size_ < 1) throw std::underflow_error("size is equals to zero");
 
-        if (size_ - 1 <= 2 * capacity_ / 3)
+        --size_;
+
+        if (size_ < 2 * capacity_ / 3)
         {
             reallocData(2 * capacity_ / 3);
         }
-        data_[size_--] = elem_t();
     }
 
     elem_t& Front() 
@@ -142,8 +170,8 @@ public:
         return data_[size_ - 1];
     }
 
-    Iterator End() const {return Iterator(nullptr);}
-    Iterator Begin() const {return Iterator(&Front());}
+    Iterator end() const {return Iterator(&data_[size_]);}
+    Iterator begin() const {return Iterator(&data_[0]);}
 
     bool isEmpty() const {return size_ == 0;}
     void Clear()
@@ -152,6 +180,9 @@ public:
 
         Fill(data_, elem_t(), capacity_);
     }
+
+    template <typename T>
+    friend std::ostream& operator<<(std::ostream& output, const Array<T>& array);
 
     ~Array()
     {
@@ -173,6 +204,7 @@ public:
 
         Iterator() = default;
         Iterator(elem_t* element) : element_(element) {};
+        Iterator(const Iterator& other) : element_(other.element_) {};
 
         const Iterator& operator=(const Iterator& other)
         {
@@ -196,7 +228,7 @@ public:
         }
 
         const Iterator& operator++()    // prefix
-        {
+        {      
             return *this += 1;
         }
 
@@ -223,6 +255,24 @@ public:
             return iterator;
         }
 
+        Iterator operator+(int offset)
+        {
+            Iterator new_iter(*this);
+
+            new_iter += offset;
+
+            return new_iter;
+        }
+
+        Iterator operator-(int offset)
+        {
+            Iterator new_iter(*this);
+
+            new_iter -= offset;
+
+            return new_iter;
+        }
+
         bool operator<(const Iterator& other)
         {
             return element_ < other.element_;
@@ -233,9 +283,24 @@ public:
             return element_ > other.element_;
         }
 
+        bool operator<=(const Iterator& other)
+        {
+            return element_ <= other.element_;
+        }
+
+        bool operator>=(const Iterator& other)
+        {
+            return element_ >= other.element_;
+        }
+
         bool operator!=(const Iterator& other)
         {
             return element_ != other.element_;
+        }
+
+        bool operator==(const Iterator& other)
+        {
+            return element_ == other.element_;
         }
         
         elem_t& operator*()
@@ -244,3 +309,62 @@ public:
         }
     };
 };
+
+template<class elem_t> 
+auto begin(const Array<elem_t>& array)
+{
+    return array.begin();
+}
+
+template<class elem_t> 
+auto begin(Array<elem_t>& array)
+{
+    return array.begin();
+}
+
+template<class elem_t> 
+auto end(const Array<elem_t>& array)
+{
+    return array.end();
+}
+
+template<class elem_t> 
+auto end(Array<elem_t>& array)
+{
+    return array.end();
+}
+
+
+template <typename elem_t>
+std::ostream& operator<<(std::ostream& output, const Array<elem_t>& array)
+{   
+    output << "Array" << " content: " << std::endl;
+
+
+    output << "\tinitialized array cells: " << std::endl;
+    
+    if (array.size_ == 0) 
+    {
+        output << "\t(empty)" << std::endl;
+    }
+
+    for (int i = 0; i < array.size_; ++i)
+    {
+        output << "\t\t[" << i << "]: " << array.data_[i] << std::endl; 
+    }
+
+    output << std::endl << "\tfree array cells: " << std::endl;
+
+    if (array.size_ == array.capacity_)
+    {
+        output << "\t(no free array cells)" << std::endl;
+    }
+
+    for (int i = array.size_; i < array.capacity_; ++i)
+    {
+        output << "\t\t[" << i << "]: " << array.data_[i] << std::endl; 
+    }
+
+
+    return output;
+}
