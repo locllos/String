@@ -2,7 +2,7 @@
 #include "string.h"
 
 String::String() : array_() {};
-String::String(const char* cstring) : array_(cstring, sizeof(cstring)) {};
+String::String(const char* cstring) : array_(cstring, strlen(cstring)) {};
 String::String(char* cstring) : array_(cstring, strlen(cstring)) {};
 String::String(char symbol, int amount_symbols) : array_(symbol, amount_symbols) {};
 String::String(const String& string) : array_(string.array_) {};
@@ -117,7 +117,7 @@ Array<char>::Iterator String::Find(const String& substring) const
         }
         if (needle == substring.end())
         {
-            return haystack;
+            return main_iter;
         }
     }
     return end();
@@ -126,7 +126,7 @@ Array<char>::Iterator String::Find(const String& substring) const
 
 Array<char>::Iterator String::RFind(const String& substring) const
 {   
-    for (auto main_iter = end() - substring.length() - 1; main_iter >= begin(); --main_iter)
+    for (auto main_iter = --end(); main_iter >= begin(); --main_iter)
     {
         auto haystack = main_iter;
         auto needle = --substring.end();
@@ -141,7 +141,7 @@ Array<char>::Iterator String::RFind(const String& substring) const
         }
         if (needle == substring.begin() - 1)
         {
-            return haystack;
+            return main_iter - substring.length();
         }
     }
     return end();
