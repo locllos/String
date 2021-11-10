@@ -169,8 +169,8 @@ public:
         return data_[size_ - 1];
     }
 
-    Iterator end() const {return Iterator(&data_[size_]);}
-    Iterator begin() const {return Iterator(&data_[0]);}
+    Iterator end() const {return Iterator(data_ != nullptr ? &data_[size_] : nullptr);}
+    Iterator begin() const {return Iterator(data_ != nullptr ? &data_[0] : nullptr);}
 
     bool isEmpty() const {return size_ == 0;}
     void Clear()
