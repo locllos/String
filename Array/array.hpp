@@ -60,14 +60,13 @@ public:
     class Iterator;
 
     Array() = default;    
-    Array(const elem_t* elements, int amount_elements) : size_(amount_elements), capacity_(amount_elements)
+    Array(const elem_t* elements, int amount_elements) : size_(amount_elements)
     {   
-        size_ = amount_elements;
         reallocData(amount_elements);
 
         Copy(elements, data_, amount_elements);
     }
-    Array(const elem_t& element, int amount_elements) : size_(amount_elements), capacity_(amount_elements)
+    Array(const elem_t& element, int amount_elements) : size_(amount_elements)
     {   
         size_ = amount_elements;
         reallocData(amount_elements);
@@ -273,6 +272,16 @@ public:
             return new_iter;
         }
 
+        int operator+(const Iterator& rhs)
+        {
+            return element_ + rhs.element_;
+        }
+
+        int operator-(const Iterator& rhs)
+        {
+            return element_ - rhs.element_;
+        }
+
         bool operator<(const Iterator& other)
         {
             return element_ < other.element_;
@@ -333,7 +342,6 @@ auto end(Array<elem_t>& array)
 {
     return array.end();
 }
-
 
 template <typename elem_t>
 std::ostream& operator<<(std::ostream& output, const Array<elem_t>& array)
